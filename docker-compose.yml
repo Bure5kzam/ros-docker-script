@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  ros2_dev_container:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.build
+      args:
+        USERNAME: bure
+        ROS_DISTRO : humble
+    image: ros2_dev_container_image
+    container_name: ros2_dev_container
+    privileged: true
+    user: bure
+    working_dir: /home/ws
+    volumes:
+      - .:/home/ws/src:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw,cached
+      - /dev/dri:/dev/dri:rw,cached
+    environment:
+      - ROS_DISTRO=humble
+      - DISPLAY=unix:0
+      # - ROS_LOCALHOST_ONLY=1
+      - ROS_DOMAIN_ID=42
+    network_mode: host
+    
+    # revise here to implement executable
+    command: ["ros2", "run", "hello_publisher", "hello_publisher"]

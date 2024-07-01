@@ -1,6 +1,7 @@
 ARG ROS_DISTRO
 FROM ros:${ROS_DISTRO} as base
-ARG USERNAME=USERNAME
+ARG OVERLAY_WS=/home/ws
+ARG USERNAME=bure
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
@@ -17,14 +18,24 @@ RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y python3-pip
 ENV SHELL /bin/bash
 
-# install package dependency
+WORKDIR ${OVERLAY_WS}
 USER $USERNAME
 
+COPY src ./src
 
+# Dependency
+ENV OVERLAY_WS=${OVERLAY_WS}
+RUN rosdep update \
+    && rosdep install --from-paths src --ignore-src -y \
+    && sudo chown -R $(whoami) ${OVERLAY_WS}/ 
 
-# RUN rosdep update \
-#     && rosdep install --from-paths src --ignore-src -y \
-#     && sudo chown -R $(whoami) /home/ws/ 
+RUN cat
+# build 
+RUN colcon build 
+RUN new_line='source "$OVERLAY_WS/install/local_setup.bash"' \
+    && file_path="/ros_entrypoint.sh" \
+    && sudo sed -i "/source \"\/opt\/ros\/\$ROS_DISTRO\/setup\.bash\"/a $new_line" "$file_path"
 
+RUN ls -al
 # # [Optional] Set the default user. Omit if you want to keep the default as root.
 # CMD ["/bin/bash"]
